@@ -12,10 +12,14 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 
 	"golang.org/x/crypto/nacl/secretbox"
+)
+
+var (
+	ErrTokenCurrupted = errors.New("token currupted")
 )
 
 // Marshal returns an encrypted, URL-safe serialization of v using key.
@@ -49,7 +53,11 @@ func Unmarshal(key *[32]byte, s string, v any) error {
 
 	d, err := base64.URLEncoding.DecodeString(s)
 	if err != nil {
-		return fmt.Errorf("decode token: %w", err)
+		return ErrTokenCurrupted
+	}
+
+	if len(d) < 24 {
+		return ErrTokenCurrupted
 	}
 
 	var nonce [24]byte
@@ -57,11 +65,11 @@ func Unmarshal(key *[32]byte, s string, v any) error {
 
 	b, ok := secretbox.Open(nil, d[24:], &nonce, key)
 	if !ok {
-		return fmt.Errorf("decrypt token: %w", err)
+		return ErrTokenCurrupted
 	}
 
 	if err := json.Unmarshal(b, v); err != nil {
-		return fmt.Errorf("unmarshal token data: %w", err)
+		return ErrTokenCurrupted
 	}
 
 	return nil

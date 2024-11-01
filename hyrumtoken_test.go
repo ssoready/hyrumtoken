@@ -2,6 +2,7 @@ package hyrumtoken_test
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"reflect"
 	"testing"
 
@@ -76,6 +77,29 @@ func TestEncoder_Unmarshal(t *testing.T) {
 
 	if data != 123 {
 		t.Fatalf("unmarshal regression, got: %d", data)
+	}
+}
+
+func TestEncoder_Unmarshal_incorrect_token_size(t *testing.T) {
+	n := [23]byte{}
+	var data int
+	if err := hyrumtoken.Unmarshal(&testkey, base64.URLEncoding.EncodeToString(n[:]), &data); err == nil {
+		t.Fatalf("expected get error")
+	}
+}
+
+func TestEncoder_Unmarshal_incorrect_ecnrypted_payload(t *testing.T) {
+	n := [100]byte{}
+	var data int
+	if err := hyrumtoken.Unmarshal(&testkey, base64.URLEncoding.EncodeToString(n[:]), &data); err == nil {
+		t.Fatalf("expected get error")
+	}
+}
+
+func TestEncoder_Unmarshal_incorrect_base64(t *testing.T) {
+	var data int
+	if err := hyrumtoken.Unmarshal(&testkey, "%=<>", &data); err == nil {
+		t.Fatalf("expected get error")
 	}
 }
 
