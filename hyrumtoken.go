@@ -57,7 +57,7 @@ func Unmarshal(key *[32]byte, s string, v any) error {
 
 	b, ok := secretbox.Open(nil, d[24:], &nonce, key)
 	if !ok {
-		return fmt.Errorf("decrypt token: %w", err)
+		return fmt.Errorf("decrypt token: invalid data or key")
 	}
 
 	if err := json.Unmarshal(b, v); err != nil {
